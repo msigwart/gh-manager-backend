@@ -3,8 +3,9 @@ import { LOGGER } from '../config'
 import { Logger } from 'winston'
 import axios from 'axios'
 import config from 'config'
-import { GitHubRepoDto, GitHubUserDto } from '../dto'
+import {GitHubIssueDto, GitHubRepoDto, GitHubUserDto} from '../dto'
 import { User } from '../models/user.model'
+import {Repo} from "../models/repo.model";
 
 @Service()
 export class GitHubService {
@@ -44,6 +45,18 @@ export class GitHubService {
   async getReposOfUser(user: User, token: string): Promise<GitHubRepoDto[]> {
     const response = await axios.get(
       `https://api.github.com/users/${user.username}/repos`,
+      {
+        headers: {
+          Authorization: `token ${token}`,
+        },
+      }
+    )
+    return response.data
+  }
+
+  async getIssuesOfRepo(repo: Repo, token: string): Promise<GitHubIssueDto[]> {
+    const response = await axios.get(
+      `https://api.github.com/repos/${repo.fullName}/issues?state=all`,
       {
         headers: {
           Authorization: `token ${token}`,

@@ -7,3 +7,9 @@ export interface GitHubRepoDto {
   name: string
   full_name: string
 }
+
+export interface GitHubIssueDto {
+  id: bigint
+  created_at: string
+  updated_at: string
+}

@@ -1,13 +1,14 @@
 import {
   Column,
   CreatedAt,
-  DataType,
+  DataType, HasMany,
   Model,
   Table,
   Unique,
   UpdatedAt,
 } from 'sequelize-typescript'
 import { Optional } from 'sequelize'
+import {Issue} from "./issue.model";
 
 interface RepoAttributes {
   id: number
@@ -51,4 +52,7 @@ export class Repo extends Model<RepoAttributes, RepoCreationAttributes> {
 
   @Column(DataType.JSON)
   data!: never
+
+  @HasMany(() => Issue)
+  issues?: Issue[]
 }

@@ -7,8 +7,9 @@ import { resolveAsyncConfigs } from 'config/async'
 import { Sequelize } from 'sequelize-typescript'
 import { User } from '../models/user.model'
 import { UserSession } from '../models/user-session.model'
-import {RepoUser} from "../models/repo-user.model";
-import {Repo} from "../models/repo.model";
+import { RepoUser } from '../models/repo-user.model'
+import { Repo } from '../models/repo.model'
+import { Issue } from '../models/issue.model'
 
 export const LOGGER = new Token<Logger>('logger')
 export const DATABASE = new Token<Sequelize>('database')
@@ -33,15 +34,12 @@ export async function initialize() {
       host: config.get('database.host'),
       port: config.get('database.port'),
       logging: (sql) => logger.debug(sql),
-      models: [User, UserSession, Repo, RepoUser], // or [Player, Team],
+      models: [User, UserSession, Repo, RepoUser, Issue], // or [Player, Team],
     })
-    try {
-      await sequelize.authenticate()
-      logger.info('Database connection has been established successfully.')
-    } catch (error) {
-      logger.error('Unable to connect to the database:', error)
-      process.exit(1)
-    }
+    // testing database connection
+    await sequelize.authenticate()
+    logger.info('Database connection has been established successfully.')
+
     Container.set(DATABASE, sequelize)
 
     const pool = new Pool(config.get('database'))
