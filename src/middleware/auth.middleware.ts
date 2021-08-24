@@ -38,6 +38,9 @@ export const requiresAuth: RequestHandler = async (req, res, next) => {
   userSession.lastAccessedOn = now
   await userSession.save()
 
-  req.user = user
+  req.context = {
+    user,
+    sessionId,
+  }
   next()
 }

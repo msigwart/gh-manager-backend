@@ -14,7 +14,7 @@ import { UserSession } from '../models/user-session.model'
 export const authApi = express.Router()
 
 authApi.get('/me', requiresAuth, async (req, res) => {
-  res.status(200).json(req.user)
+  res.status(200).json(req.context.user)
 })
 
 authApi.post('/session', body('code').exists(), async (req, res, next) => {

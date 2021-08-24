@@ -7,6 +7,8 @@ import { resolveAsyncConfigs } from 'config/async'
 import { Sequelize } from 'sequelize-typescript'
 import { User } from '../models/user.model'
 import { UserSession } from '../models/user-session.model'
+import {RepoUser} from "../models/repo-user.model";
+import {Repo} from "../models/repo.model";
 
 export const LOGGER = new Token<Logger>('logger')
 export const DATABASE = new Token<Sequelize>('database')
@@ -31,7 +33,7 @@ export async function initialize() {
       host: config.get('database.host'),
       port: config.get('database.port'),
       logging: (sql) => logger.debug(sql),
-      models: [User, UserSession], // or [Player, Team],
+      models: [User, UserSession, Repo, RepoUser], // or [Player, Team],
     })
     try {
       await sequelize.authenticate()
