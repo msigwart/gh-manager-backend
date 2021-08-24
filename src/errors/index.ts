@@ -8,6 +8,9 @@ export const USER_NOT_FOUND_ERROR = 200
 export const UNKNOWN_ERROR = 201
 export const RESOURCE_NOT_FOUND_ERROR = 202
 
+// Validation errors
+export const INVALID_REQUEST_BODY_ERROR = 300
+
 abstract class AbstractError extends Error {
   protected constructor(
     public statusCode: number,
