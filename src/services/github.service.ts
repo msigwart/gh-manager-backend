@@ -50,14 +50,11 @@ export class GitHubService {
   }
 
   async getReposOfUser(user: User, token: string): Promise<GitHubRepoDto[]> {
-    const response = await axios.get(
-      `https://api.github.com/users/${user.username}/repos`,
-      {
-        headers: {
-          Authorization: `token ${token}`,
-        },
-      }
-    )
+    const response = await axios.get(`https://api.github.com/user/repos`, {
+      headers: {
+        Authorization: `token ${token}`,
+      },
+    })
     return response.data
   }
 
