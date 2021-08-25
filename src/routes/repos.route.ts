@@ -9,6 +9,7 @@ import { RepoUser } from '../models/repo-user.model'
 import { Issue } from '../models/issue.model'
 import { RepoService } from '../services/repo.service'
 import { Repo } from '../models/repo.model'
+import { PullRequest } from '../models/pull-request.model'
 
 export const reposApi = express.Router()
 
@@ -29,6 +30,11 @@ reposApi.get('/', requiresAuth, async (req, res, next) => {
           .refreshIssuesOfRepo(repo, req.context.sessionId)
           .catch((e) =>
             console.warn(`Failed to refresh issues of repo ${repo.id} (${e})`)
+          )
+        repoService
+          .refreshPullRequestsOfRepo(repo, req.context.sessionId)
+          .catch((e) =>
+            console.warn(`Failed to refresh pull requests of repo ${repo.id} (${e})`)
           )
       })
     }
@@ -53,6 +59,33 @@ reposApi.get('/issues', requiresAuth, async (req, res, next) => {
       return res.status(200).json([])
     }
     const issues = await Issue.findAll({
+      where: {
+        repoId: repos.map((repo) => repo.repoId),
+      },
+      include: [Repo],
+      order: [['createdOn', 'DESC']],
+    })
+    res.status(200).json(issues)
+  } catch (e) {
+    next(e)
+  }
+})
+
+reposApi.get('/pulls', requiresAuth, async (req, res, next) => {
+  try {
+    const logger = Container.get(LOGGER)
+    logger.info('Retrieving issues of repos followed by user...')
+    const repos = await RepoUser.findAll({
+      where: {
+        userId: req.context.user.id,
+        isFollowed: true,
+      },
+      attributes: ['repoId'],
+    })
+    if (repos.length <= 0) {
+      return res.status(200).json([])
+    }
+    const issues = await PullRequest.findAll({
       where: {
         repoId: repos.map((repo) => repo.repoId),
       },

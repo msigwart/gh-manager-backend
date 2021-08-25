@@ -4,7 +4,8 @@ import { Logger } from 'winston'
 import { Sequelize } from 'sequelize-typescript'
 import { GitHubService } from './github.service'
 import { Repo } from '../models/repo.model'
-import {Issue} from "../models/issue.model";
+import { Issue } from '../models/issue.model'
+import { PullRequest } from '../models/pull-request.model'
 
 @Service()
 export class RepoService {
@@ -17,7 +18,7 @@ export class RepoService {
   ) {}
 
   async getActivityOfRepos(repoIds: number[]): Promise<Repo[]> {
-    return [];
+    return []
     // const userWithRepos = await user.reload({
     //   include: [
     //     {
@@ -32,7 +33,7 @@ export class RepoService {
   }
 
   async getPullRequestsOfRepos(repoIds: number[]): Promise<Repo[]> {
-    return [];
+    return []
     // const userWithRepos = await user.reload({
     //   include: [
     //     {
@@ -53,6 +54,34 @@ export class RepoService {
     try {
       for (const issue of issues) {
         await Issue.findOrCreate({
+          where: {
+            githubId: issue.id,
+          },
+          defaults: {
+            githubId: issue.id,
+            repoId: repo.id,
+            createdOn: new Date(issue.created_at),
+            updatedOn: new Date(issue.updated_at),
+            data: issue as never,
+          },
+          transaction: t,
+        })
+      }
+      await t.commit()
+    } catch (e) {
+      this.logger.error(e)
+      await t.rollback()
+      throw e
+    }
+  }
+
+  async refreshPullRequestsOfRepo(repo: Repo, token: string): Promise<void> {
+    this.logger.info(`Refreshing pull requests for repo ${repo.fullName}`)
+    const issues = await this.github.getPullRequestsOfRepo(repo, token)
+    const t = await this.db.transaction()
+    try {
+      for (const issue of issues) {
+        await PullRequest.findOrCreate({
           where: {
             githubId: issue.id,
           },

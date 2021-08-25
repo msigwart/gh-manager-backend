@@ -13,3 +13,9 @@ export interface GitHubIssueDto {
   created_at: string
   updated_at: string
 }
+
+export interface GitHubPullRequestDto {
+  id: bigint
+  created_at: string
+  updated_at: string
+}
