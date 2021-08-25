@@ -11,13 +11,14 @@ import {
 import { Optional } from 'sequelize'
 import { Repo } from './repo.model'
 import { RepoUser } from './repo-user.model'
+import { GitHubUserDto } from '../dto'
 
 interface UserAttributes {
   id: number
   username: string
   createdOn: Date
   updatedOn: Date
-  data: never
+  data: GitHubUserDto
   repos: Repo[]
 }
 
@@ -45,7 +46,7 @@ export class User extends Model<UserAttributes, UserCreationAttributes> {
   updatedOn!: Date
 
   @Column(DataType.JSON)
-  data!: never
+  data!: GitHubUserDto
 
   @BelongsToMany(() => Repo, () => RepoUser)
   repos?: Repo[]

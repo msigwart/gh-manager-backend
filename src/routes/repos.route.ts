@@ -10,6 +10,7 @@ import { Issue } from '../models/issue.model'
 import { RepoService } from '../services/repo.service'
 import { Repo } from '../models/repo.model'
 import { PullRequest } from '../models/pull-request.model'
+import {Review} from "../models/review.model";
 
 export const reposApi = express.Router()
 
@@ -85,14 +86,17 @@ reposApi.get('/pulls', requiresAuth, async (req, res, next) => {
     if (repos.length <= 0) {
       return res.status(200).json([])
     }
-    const issues = await PullRequest.findAll({
+    const pulls = await PullRequest.findAll({
       where: {
         repoId: repos.map((repo) => repo.repoId),
       },
-      include: [Repo],
-      order: [['createdOn', 'DESC']],
+      include: [Repo, Review],
+      order: [
+        ['createdOn', 'DESC'],
+        ['reviews', 'submittedOn', 'DESC'],
+      ],
     })
-    res.status(200).json(issues)
+    res.status(200).json(pulls)
   } catch (e) {
     next(e)
   }

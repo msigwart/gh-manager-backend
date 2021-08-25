@@ -3,12 +3,15 @@ import {
   Column,
   DataType,
   ForeignKey,
+  HasMany,
   Model,
   Table,
   Unique,
 } from 'sequelize-typescript'
 import { Optional } from 'sequelize'
 import { Repo } from './repo.model'
+import { GitHubPullRequestDto } from '../dto'
+import { Review } from './review.model'
 
 interface PullRequestAttributes {
   id: number
@@ -16,7 +19,7 @@ interface PullRequestAttributes {
   repoId: number
   createdOn: Date
   updatedOn: Date
-  data: never
+  data: GitHubPullRequestDto
 }
 
 type PullRequestCreationAttributes = Optional<PullRequestAttributes, 'id'>
@@ -48,5 +51,8 @@ export class PullRequest extends Model<
   updatedOn!: Date
 
   @Column(DataType.JSON)
-  data!: never
+  data!: GitHubPullRequestDto
+
+  @HasMany(() => Review)
+  reviews?: Review
 }

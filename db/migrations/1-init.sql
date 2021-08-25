@@ -51,6 +51,14 @@ CREATE TABLE IF NOT EXISTS pull_request (
   data       JSON NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS review (
+  id            SERIAL PRIMARY KEY,
+  github_id     BIGINT NOT NULL UNIQUE,
+  submitted_on  TIMESTAMP NOT NULL,
+  pull_id       INTEGER NOT NULL REFERENCES pull_request(id),
+  data          JSON NOT NULL
+);
+
 
 CREATE UNIQUE INDEX user_session_ix1 ON user_session (session_id);
 CREATE UNIQUE INDEX registered_user_ix1 ON registered_user (username);
@@ -58,3 +66,4 @@ CREATE UNIQUE INDEX repo_ix1 ON repo (full_name);
 CREATE UNIQUE INDEX repo_ix2 ON repo (github_id);
 CREATE UNIQUE INDEX issue_ix1 ON issue (github_id);
 CREATE UNIQUE INDEX pull_request_ix1 ON pull_request (github_id);
+CREATE UNIQUE INDEX review_ix1 ON review (github_id);

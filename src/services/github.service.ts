@@ -3,9 +3,16 @@ import { LOGGER } from '../config'
 import { Logger } from 'winston'
 import axios from 'axios'
 import config from 'config'
-import {GitHubIssueDto, GitHubPullRequestDto, GitHubRepoDto, GitHubUserDto} from '../dto'
+import {
+  GitHubIssueDto,
+  GitHubPullRequestDto,
+  GitHubRepoDto,
+  GitHubReviewDto,
+  GitHubUserDto,
+} from '../dto'
 import { User } from '../models/user.model'
 import { Repo } from '../models/repo.model'
+import { PullRequest } from '../models/pull-request.model'
 
 @Service()
 export class GitHubService {
@@ -72,6 +79,22 @@ export class GitHubService {
   ): Promise<GitHubPullRequestDto[]> {
     const response = await axios.get(
       `https://api.github.com/repos/${repo.fullName}/pulls?state=all`,
+      {
+        headers: {
+          Authorization: `token ${token}`,
+        },
+      }
+    )
+    return response.data
+  }
+
+  async getReviewsOfPullRequest(
+    repo: Repo,
+    pull: PullRequest,
+    token: string
+  ): Promise<GitHubReviewDto[]> {
+    const response = await axios.get(
+      `https://api.github.com/repos/${repo.fullName}/pulls/${pull.data.number}/reviews`,
       {
         headers: {
           Authorization: `token ${token}`,

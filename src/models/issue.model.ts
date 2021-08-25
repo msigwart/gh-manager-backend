@@ -9,6 +9,7 @@ import {
 } from 'sequelize-typescript'
 import { Optional } from 'sequelize'
 import { Repo } from './repo.model'
+import { GitHubIssueDto } from '../dto'
 
 interface IssueAttributes {
   id: number
@@ -16,7 +17,7 @@ interface IssueAttributes {
   repoId: number
   createdOn: Date
   updatedOn: Date
-  data: never
+  data: GitHubIssueDto
 }
 
 type IssueCreationAttributes = Optional<IssueAttributes, 'id'>
@@ -45,5 +46,5 @@ export class Issue extends Model<IssueAttributes, IssueCreationAttributes> {
   updatedOn!: Date
 
   @Column(DataType.JSON)
-  data!: never
+  data!: GitHubIssueDto
 }
