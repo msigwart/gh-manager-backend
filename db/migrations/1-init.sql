@@ -5,6 +5,8 @@ CREATE TABLE IF NOT EXISTS registered_user (
   username                  VARCHAR(255) NOT NULL UNIQUE,
   created_on                TIMESTAMP    NOT NULL,
   updated_on                TIMESTAMP    NOT NULL,
+  last_sync_on              TIMESTAMP,
+  is_admin                  BOOLEAN      NOT NULL DEFAULT FALSE,
   data                      JSON         NOT NULL
 );
 

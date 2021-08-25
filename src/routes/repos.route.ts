@@ -1,7 +1,6 @@
 import express from 'express'
 import { requiresAuth } from '../middleware/auth.middleware'
 import { Container } from 'typedi'
-import { UserService } from '../services/user.service'
 import { LOGGER } from '../config'
 import { body, validationResult } from 'express-validator'
 import { INVALID_REQUEST_BODY_ERROR, ValidationError } from '../errors'
@@ -10,7 +9,7 @@ import { Issue } from '../models/issue.model'
 import { RepoService } from '../services/repo.service'
 import { Repo } from '../models/repo.model'
 import { PullRequest } from '../models/pull-request.model'
-import {Review} from "../models/review.model";
+import { Review } from '../models/review.model'
 
 export const reposApi = express.Router()
 
@@ -18,26 +17,15 @@ reposApi.get('/', requiresAuth, async (req, res, next) => {
   try {
     const logger = Container.get(LOGGER)
     logger.info('Retrieving repos of user...')
-    const userService = Container.get(UserService)
     const repoService = Container.get(RepoService)
-    let repos = await userService.getReposOfUser(req.context.user)
+    let repos = await repoService.getReposOfUser(req.context.user)
     if (repos.length === 0) {
       // try to refresh GitHub data if user has no associated repos yet
-      await userService.refreshUserData(req.context.user, req.context.sessionId)
-      repos = await userService.getReposOfUser(req.context.user)
-      repos.forEach((repo) => {
-        // do asynchronously
-        repoService
-          .refreshIssuesOfRepo(repo, req.context.sessionId)
-          .catch((e) =>
-            console.warn(`Failed to refresh issues of repo ${repo.id} (${e})`)
-          )
-        repoService
-          .refreshPullRequestsOfRepo(repo, req.context.sessionId)
-          .catch((e) =>
-            console.warn(`Failed to refresh pull requests of repo ${repo.id} (${e})`)
-          )
-      })
+      await repoService.refreshReposOfUser(
+        req.context.user,
+        req.context.sessionId
+      )
+      repos = await repoService.getReposOfUser(req.context.user)
     }
     res.status(200).json(repos)
   } catch (e) {

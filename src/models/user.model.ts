@@ -18,13 +18,15 @@ interface UserAttributes {
   username: string
   createdOn: Date
   updatedOn: Date
+  isAdmin: boolean
+  lastSyncOn: Date
   data: GitHubUserDto
   repos: Repo[]
 }
 
 type UserCreationAttributes = Optional<
   UserAttributes,
-  'id' | 'createdOn' | 'updatedOn' | 'repos'
+  'id' | 'createdOn' | 'updatedOn' | 'repos' | 'lastSyncOn' | 'isAdmin'
 >
 
 @Table({
@@ -44,6 +46,12 @@ export class User extends Model<UserAttributes, UserCreationAttributes> {
   @UpdatedAt
   @Column
   updatedOn!: Date
+
+  @Column
+  lastSyncOn!: Date
+
+  @Column
+  isAdmin!: boolean
 
   @Column(DataType.JSON)
   data!: GitHubUserDto

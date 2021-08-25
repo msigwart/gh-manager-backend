@@ -7,9 +7,13 @@ export const INVALID_SESSION_ERROR = 102
 export const USER_NOT_FOUND_ERROR = 200
 export const UNKNOWN_ERROR = 201
 export const RESOURCE_NOT_FOUND_ERROR = 202
+export const DATA_REFRESH_FAILED_ERROR = 203
 
 // Validation errors
 export const INVALID_REQUEST_BODY_ERROR = 300
+
+// Authorization errors
+export const SYNC_NOT_ALLOWED_ERROR = 400
 
 abstract class AbstractError extends Error {
   protected constructor(

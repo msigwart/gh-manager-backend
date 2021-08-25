@@ -60,20 +60,6 @@ export class UserService {
     }
   }
 
-  async getReposOfUser(user: User): Promise<Repo[]> {
-    const userWithRepos = await user.reload({
-      include: [
-        {
-          model: Repo,
-          as: 'repos',
-          through: { attributes: ['isFollowed'] }, // this may not be needed
-        },
-      ],
-    })
-    const repos = userWithRepos.repos
-    return repos ? repos : []
-  }
-
   async refreshUserData(user: User, token: string): Promise<void> {
     this.logger.info('Refreshing user data')
     const repos = await this.github.getReposOfUser(user, token)

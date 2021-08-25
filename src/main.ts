@@ -8,6 +8,7 @@ import { log } from './middleware/logger.middleware'
 import { errorHandler } from './middleware/error.middleware'
 import { authApi } from './routes/auth.route'
 import { reposApi } from './routes/repos.route'
+import { adminApi } from './routes/admin.route'
 import { NotFoundError, RESOURCE_NOT_FOUND_ERROR } from './errors'
 import cors from 'cors'
 
@@ -22,6 +23,7 @@ initialize().then(() => {
   app.use(cors())
   app.use('/auth', authApi)
   app.use('/repos', reposApi)
+  app.use('/admin', adminApi)
   app.all('*', (req, res: Response, next) => {
     next(new NotFoundError(RESOURCE_NOT_FOUND_ERROR, 'resource does not exist'))
   })

@@ -1,13 +1,17 @@
-import { Inject, Service } from 'typedi'
-import { DATABASE, LOGGER } from '../config'
-import { Logger } from 'winston'
-import { Sequelize } from 'sequelize-typescript'
-import { GitHubService } from './github.service'
-import { Repo } from '../models/repo.model'
-import { Issue } from '../models/issue.model'
-import { PullRequest } from '../models/pull-request.model'
-import { Transaction } from 'sequelize'
-import { Review } from '../models/review.model'
+import {Inject, Service} from 'typedi'
+import {DATABASE, LOGGER} from '../config'
+import {Logger} from 'winston'
+import {Sequelize} from 'sequelize-typescript'
+import {GitHubService} from './github.service'
+import {Repo} from '../models/repo.model'
+import {Issue} from '../models/issue.model'
+import {PullRequest} from '../models/pull-request.model'
+import {Transaction} from 'sequelize'
+import {Review} from '../models/review.model'
+import {User} from '../models/user.model'
+import {UserSession} from '../models/user-session.model'
+import {DATA_REFRESH_FAILED_ERROR, ServerError} from '../errors'
+import {RepoUser} from '../models/repo-user.model'
 
 @Service()
 export class RepoService {
@@ -19,26 +23,65 @@ export class RepoService {
     private db: Sequelize
   ) {}
 
-  async refreshIssuesOfRepo(repo: Repo, token: string): Promise<void> {
-    this.logger.info(`Refreshing issues for repo ${repo.fullName}`)
-    const issues = await this.github.getIssuesOfRepo(repo, token)
+  async getReposOfUser(user: User): Promise<Repo[]> {
+    const userWithRepos = await user.reload({
+      include: [
+        {
+          model: Repo,
+          as: 'repos',
+          through: { attributes: ['isFollowed'] }, // this may not be needed
+        },
+      ],
+    })
+    const repos = userWithRepos.repos
+    return repos ? repos : []
+  }
+
+  async refreshReposOfUser(user: User, token?: string): Promise<void> {
+    this.logger.info(`Refreshing repos for user ${user.username}`)
+    let authToken = token
+    if (!authToken) {
+      const session = await UserSession.findOne({
+        where: {
+          userId: user.id,
+        },
+      })
+      if (!session) {
+        throw new ServerError(
+          DATA_REFRESH_FAILED_ERROR,
+          `Cannot refresh data for user ${user.username}`
+        )
+      }
+      authToken = session.sessionId
+    }
+    const repos = await this.github.getReposOfUser(user, authToken)
     const t = await this.db.transaction()
     try {
-      for (const issue of issues) {
-        await Issue.findOrCreate({
+      for (const repo of repos) {
+        const [createdRepo, created] = await Repo.findOrCreate({
           where: {
-            githubId: issue.id,
+            githubId: repo.id,
           },
           defaults: {
-            githubId: issue.id,
-            repoId: repo.id,
-            createdOn: new Date(issue.created_at),
-            updatedOn: new Date(issue.updated_at),
-            data: issue,
+            githubId: repo.id,
+            name: repo.name,
+            fullName: repo.full_name,
+            data: repo as never,
           },
           transaction: t,
         })
+        await RepoUser.findOrCreate({
+          where: {
+            userId: user.id,
+            repoId: createdRepo.id,
+          },
+          transaction: t,
+        })
+        await this.refreshIssuesOfRepo(createdRepo, authToken, t)
+        await this.refreshPullRequestsOfRepo(createdRepo, authToken, t)
       }
+      user.lastSyncOn = new Date()
+      await user.save()
       await t.commit()
     } catch (e) {
       this.logger.error(e)
@@ -47,35 +90,57 @@ export class RepoService {
     }
   }
 
-  async refreshPullRequestsOfRepo(repo: Repo, token: string): Promise<void> {
+  private async refreshIssuesOfRepo(
+    repo: Repo,
+    token: string,
+    transaction: Transaction
+  ): Promise<void> {
+    this.logger.info(`Refreshing issues for repo ${repo.fullName}`)
+    const issues = await this.github.getIssuesOfRepo(repo, token)
+    for (const issue of issues) {
+      await Issue.findOrCreate({
+        where: {
+          githubId: issue.id,
+        },
+        defaults: {
+          githubId: issue.id,
+          repoId: repo.id,
+          createdOn: new Date(issue.created_at),
+          updatedOn: new Date(issue.updated_at),
+          data: issue,
+        },
+        transaction: transaction,
+      })
+    }
+  }
+
+  private async refreshPullRequestsOfRepo(
+    repo: Repo,
+    token: string,
+    transaction: Transaction
+  ): Promise<void> {
     this.logger.info(`Refreshing pull requests for repo ${repo.fullName}`)
     const pullRequests = await this.github.getPullRequestsOfRepo(repo, token)
-    const t = await this.db.transaction()
-    try {
-      for (const pr of pullRequests) {
-        const [createdPR, created] = await PullRequest.findOrCreate({
-          where: {
-            githubId: pr.id,
-          },
-          defaults: {
-            githubId: pr.id,
-            repoId: repo.id,
-            createdOn: new Date(pr.created_at),
-            updatedOn: new Date(pr.updated_at),
-            data: pr,
-          },
-          transaction: t,
-        })
-        if (created) {
-          this.logger.info(`Added pull request ${createdPR.githubId} to database`)
-        }
-        await this.refreshReviewsOfPullRequests(repo, createdPR, token, t)
-      }
-      await t.commit()
-    } catch (e) {
-      this.logger.error(e)
-      await t.rollback()
-      throw e
+    for (const pr of pullRequests) {
+      const [createdPR, created] = await PullRequest.findOrCreate({
+        where: {
+          githubId: pr.id,
+        },
+        defaults: {
+          githubId: pr.id,
+          repoId: repo.id,
+          createdOn: new Date(pr.created_at),
+          updatedOn: new Date(pr.updated_at),
+          data: pr,
+        },
+        transaction: transaction,
+      })
+      await this.refreshReviewsOfPullRequests(
+        repo,
+        createdPR,
+        token,
+        transaction
+      )
     }
   }
 
