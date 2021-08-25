@@ -1,15 +1,13 @@
-import {getSecret} from "../utils/secrets";
-import {asyncConfig} from "config/async";
-
 module.exports = {
   database: {
     host: `/cloudsql/${process.env.CLOUD_SQL_CONNECTION_NAME}`,
-    password: asyncConfig(getSecret('DB_PASSWORD', 2))
+    password: process.env.DB_PASSWORD,
   },
-  mail: {
-    password: asyncConfig(getSecret('MAIL_PASSWORD', 2))
+  github: {
+    clientSecret: process.env.GITHUB_CLIENT_SECRET,
   },
   app: {
-    logLevel: 'debug'
+    domain: process.env.DOMAIN,
+    logLevel: 'debug',
   },
-};
+}

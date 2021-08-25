@@ -5,14 +5,13 @@
   "main": "build/main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc & eval 'docker build -t gcr.io/gh-manager/${npm_package_name}:${npm_package_version} .'",
+    "build": "tsc & eval 'docker build -t gcr.io/gh-manager-324012/${npm_package_name}:${npm_package_version} .'",
     "start": "tsc & node .",
     "dev": "tsc -w & nodemon ."
   },
   "author": "Marten Sigwart <marten@okamaja.de>",
   "license": "ISC",
   "dependencies": {
-    "@google-cloud/secret-manager": "^3.9.1",
     "axios": "^0.21.1",
     "config": "^3.3.6",
     "cors": "^2.8.5",
